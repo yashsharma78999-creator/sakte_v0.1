@@ -241,3 +241,42 @@ CREATE POLICY "Admin can create inventory logs" ON public.inventory_logs
       WHERE id = auth.uid() AND role = 'admin'
     )
   );
+
+-- Create payment transactions table
+CREATE TABLE public.payment_transactions (
+  id BIGSERIAL PRIMARY KEY,
+  transaction_id TEXT UNIQUE NOT NULL,
+  order_id BIGINT REFERENCES public.orders(id) ON DELETE CASCADE,
+  amount DECIMAL(10, 2) NOT NULL,
+  email TEXT NOT NULL,
+  phone TEXT,
+  status TEXT DEFAULT 'initiated' CHECK (status IN ('initiated', 'success', 'failed', 'pending')),
+  hash TEXT,
+  payu_response JSONB,
+  simulated BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE INDEX idx_payment_transactions_transaction_id ON public.payment_transactions(transaction_id);
+CREATE INDEX idx_payment_transactions_order_id ON public.payment_transactions(order_id);
+CREATE INDEX idx_payment_transactions_status ON public.payment_transactions(status);
+
+-- RLS Policies for payment_transactions
+ALTER TABLE public.payment_transactions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admin can view payment transactions" ON public.payment_transactions
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
+CREATE POLICY "Users can view their payment transactions" ON public.payment_transactions
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.orders
+      WHERE orders.id = payment_transactions.order_id
+      AND orders.user_id = auth.uid()
+    )
+  );
