@@ -4,7 +4,7 @@ import { Trophy, Mail, Lock, User, ArrowRight, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -26,23 +26,20 @@ const Auth = () => {
     try {
       if (isLogin) {
         await login(formData.email, formData.password);
-        toast({ title: 'Welcome back!' });
+        toast.success('Welcome back!');
       } else {
         if (formData.password !== formData.passwordConfirmation) {
-          toast({ title: 'Passwords do not match', variant: 'destructive' });
+          toast.error('Passwords do not match');
           setIsLoading(false);
           return;
         }
-        await register(formData.name, formData.email, formData.password, formData.passwordConfirmation);
-        toast({ title: 'Account created successfully!' });
+        await register(formData.email, formData.password, formData.name);
+        toast.success('Account created successfully!');
       }
       navigate('/');
     } catch (error) {
-      toast({
-        title: isLogin ? 'Login failed' : 'Registration failed',
-        description: error instanceof Error ? error.message : 'An error occurred',
-        variant: 'destructive',
-      });
+      const errorMsg = error instanceof Error ? error.message : 'An error occurred';
+      toast.error(isLogin ? `Login failed: ${errorMsg}` : `Registration failed: ${errorMsg}`);
     } finally {
       setIsLoading(false);
     }

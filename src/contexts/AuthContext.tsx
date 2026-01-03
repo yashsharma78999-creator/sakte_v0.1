@@ -35,17 +35,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   const checkAuth = useCallback(async () => {
+    const timeoutId = setTimeout(() => {
+      console.warn("Auth check timeout - moving forward");
+      setIsLoading(false);
+    }, 5000); // 5 second timeout
+
     try {
       const {
         data: { user: authUser },
       } = await supabase.auth.getUser();
 
+      clearTimeout(timeoutId);
+
       if (authUser) {
-        const profile = await profileService.getById(authUser.id);
-        setUser({
-          ...profile,
-          email: authUser.email || profile.email,
-        });
+        try {
+          console.log("[AUTH] Fetching profile for user:", authUser.id);
+          const profile = await profileService.getById(authUser.id);
+
+          console.log("[AUTH] Profile loaded successfully");
+          setUser({
+            ...profile,
+            email: authUser.email || profile.email,
+          });
+        } catch (profileError) {
+          console.error("Profile fetch error:", profileError);
+          console.log("[AUTH] Using fallback user object due to profile fetch failure");
+          // Fallback: create a minimal user object if profile fetch fails
+          setUser({
+            id: authUser.id,
+            email: authUser.email || "",
+            role: "customer",
+            full_name: null,
+            avatar_url: null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+        }
       } else {
         setUser(null);
       }
@@ -53,6 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error("Auth check error:", error);
       setUser(null);
     } finally {
+      clearTimeout(timeoutId);
       setIsLoading(false);
     }
   }, []);
@@ -64,15 +90,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("[AUTH] Auth state changed:", event);
       if (session?.user) {
         try {
+          console.log("[AUTH] Fetching profile for user:", session.user.id);
           const profile = await profileService.getById(session.user.id);
+
+          console.log("[AUTH] Profile loaded:", profile);
           setUser({
             ...profile,
             email: session.user.email || profile.email,
           });
         } catch (error) {
-          console.error("Error fetching profile:", error);
+          console.error("[AUTH] Error fetching profile:", error);
+          console.log("[AUTH] Using fallback user object");
+          // Fallback: create a minimal user object if profile fetch fails
+          setUser({
+            id: session.user.id,
+            email: session.user.email || "",
+            role: "customer",
+            full_name: null,
+            avatar_url: null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
         }
       } else {
         setUser(null);
@@ -85,19 +126,50 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [checkAuth]);
 
   const login = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    console.log("[AUTH] Login attempt with email:", email);
 
-    if (error) throw error;
-
-    if (data.user) {
-      const profile = await profileService.getById(data.user.id);
-      setUser({
-        ...profile,
-        email: data.user.email || profile.email,
+    try {
+      console.log("[AUTH] Calling signInWithPassword...");
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
+
+      if (error) {
+        console.error("[AUTH] Login error:", error);
+        throw error;
+      }
+
+      console.log("[AUTH] Login successful, user ID:", data.user?.id);
+
+      if (data.user) {
+        try {
+          console.log("[AUTH] Fetching profile for user:", data.user.id);
+          const profile = await profileService.getById(data.user.id);
+
+          console.log("[AUTH] Profile fetched:", profile);
+          setUser({
+            ...profile,
+            email: data.user.email || profile.email,
+          });
+        } catch (profileError) {
+          console.error("[AUTH] Profile fetch error:", profileError);
+          // Even if profile fetch fails, user is authenticated - allow login to proceed
+          console.log("[AUTH] Using fallback user object");
+          setUser({
+            id: data.user.id,
+            email: data.user.email || email,
+            role: "customer",
+            full_name: null,
+            avatar_url: null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+        }
+      }
+    } catch (error: any) {
+      console.error("[AUTH] Login failed:", error.message);
+      throw error;
     }
   };
 
@@ -106,27 +178,72 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     password: string,
     fullName?: string
   ) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
+    console.log("[AUTH] Register attempt with email:", email);
 
-    if (error) throw error;
+    if (!email || !password) {
+      throw new Error("Email and password are required");
+    }
 
-    if (data.user) {
-      // Create profile
-      const profile = await profileService.create({
-        id: data.user.id,
+    if (password.length < 6) {
+      throw new Error("Password must be at least 6 characters");
+    }
+
+    try {
+      console.log("[AUTH] Calling signUp with email:", email);
+      const { data, error } = await supabase.auth.signUp({
         email,
-        full_name: fullName || null,
-        role: "customer",
-        avatar_url: null,
+        password,
       });
 
-      setUser({
-        ...profile,
-        email: data.user.email || email,
-      });
+      if (error) {
+        console.error("[AUTH] SignUp error:", error);
+        throw error;
+      }
+
+      console.log("[AUTH] SignUp successful, user ID:", data.user?.id);
+
+      if (data.user) {
+        try {
+          // Create profile with timeout (5 seconds)
+          console.log("[AUTH] Creating profile for user:", data.user.id);
+
+          const profilePromise = profileService.create({
+            id: data.user.id,
+            email,
+            full_name: fullName || null,
+            role: "customer",
+            avatar_url: null,
+          });
+
+          const profileTimeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Profile creation timeout")), 5000)
+          );
+
+          const profile = await Promise.race([profilePromise, profileTimeoutPromise]);
+
+          console.log("[AUTH] Profile created successfully");
+          setUser({
+            ...profile,
+            email: data.user.email || email,
+          });
+        } catch (profileError) {
+          console.error("[AUTH] Profile creation error:", profileError);
+          console.log("[AUTH] Using fallback after profile creation failure");
+          // Still set user even if profile creation fails
+          setUser({
+            id: data.user.id,
+            email: data.user.email || email,
+            role: "customer",
+            full_name: fullName || null,
+            avatar_url: null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+        }
+      }
+    } catch (error: any) {
+      console.error("[AUTH] Registration failed:", error.message);
+      throw error;
     }
   };
 
