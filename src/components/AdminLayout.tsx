@@ -19,7 +19,17 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const { user, isAdmin, logout, isLoading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const location = useLocation();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Only check auth after component is mounted and auth has loaded
+  if (!mounted) {
+    return null;
+  }
 
   if (isLoading) {
     return (
