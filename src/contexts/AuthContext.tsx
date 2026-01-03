@@ -77,15 +77,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("[AUTH] Auth state changed:", event);
       if (session?.user) {
         try {
+          console.log("[AUTH] Fetching profile for user:", session.user.id);
           const profile = await profileService.getById(session.user.id);
+          console.log("[AUTH] Profile loaded:", profile);
           setUser({
             ...profile,
             email: session.user.email || profile.email,
           });
         } catch (error) {
-          console.error("Error fetching profile:", error);
+          console.error("[AUTH] Error fetching profile:", error);
+          // Fallback: create a minimal user object if profile fetch fails
+          setUser({
+            id: session.user.id,
+            email: session.user.email || "",
+            role: "customer",
+            full_name: null,
+            avatar_url: null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
         }
       } else {
         setUser(null);
