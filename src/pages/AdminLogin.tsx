@@ -24,13 +24,6 @@ export default function AdminLogin() {
     checkConnection();
   }, []);
 
-  // Auto-redirect when user becomes admin
-  useEffect(() => {
-    if (user && isAdmin && !isSubmitting) {
-      navigate("/admin/dashboard", { replace: true });
-    }
-  }, [user, isAdmin, isSubmitting, navigate]);
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -42,6 +35,12 @@ export default function AdminLogin() {
     );
   }
 
+  // Auto-redirect when user becomes admin
+  if (user && isAdmin) {
+    navigate("/admin/dashboard", { replace: true });
+    return null;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("[AdminLogin] Form submitted");
@@ -51,9 +50,7 @@ export default function AdminLogin() {
       console.log("[AdminLogin] Calling login function");
       await login(email, password);
       console.log("[AdminLogin] Login successful");
-
-      // Auth context will handle the state update
-      // Component will auto-redirect when user state changes
+      // The auth state change will trigger the redirect above
     } catch (error: any) {
       console.error("[AdminLogin] Login error:", error);
       const errorMsg = error?.message || "Failed to sign in. Please try again.";
