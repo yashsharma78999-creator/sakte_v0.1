@@ -114,17 +114,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     console.log("[AUTH] Login attempt with email:", email);
 
     try {
-      const loginPromise = supabase.auth.signInWithPassword({
+      console.log("[AUTH] Calling signInWithPassword...");
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-
-      // Add 10 second timeout for login
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Login timeout - Supabase connection failed")), 10000)
-      );
-
-      const { data, error } = await Promise.race([loginPromise, timeoutPromise]) as any;
 
       if (error) {
         console.error("[AUTH] Login error:", error);
@@ -135,6 +129,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (data.user) {
         try {
+          console.log("[AUTH] Fetching profile for user:", data.user.id);
           const profile = await profileService.getById(data.user.id);
           console.log("[AUTH] Profile fetched:", profile);
           setUser({
