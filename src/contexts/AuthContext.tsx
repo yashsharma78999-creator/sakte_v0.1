@@ -51,10 +51,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
           console.log("[AUTH] Fetching profile for user:", authUser.id);
 
-          // Add timeout to profile fetch (3 seconds)
+          // Add timeout to profile fetch (5 seconds)
           const profilePromise = profileService.getById(authUser.id);
           const profileTimeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("Profile fetch timeout")), 3000)
+            setTimeout(() => reject(new Error("Profile fetch timeout")), 5000)
           );
 
           const profile = await Promise.race([profilePromise, profileTimeoutPromise]);
@@ -66,6 +66,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           });
         } catch (profileError) {
           console.error("Profile fetch error:", profileError);
+          console.log("[AUTH] Using fallback user object due to profile fetch failure");
           // Fallback: create a minimal user object if profile fetch fails
           setUser({
             id: authUser.id,
