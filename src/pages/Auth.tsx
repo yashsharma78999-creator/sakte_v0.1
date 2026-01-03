@@ -33,7 +33,7 @@ const Auth = () => {
           setIsLoading(false);
           return;
         }
-        await register(formData.name, formData.email, formData.password, formData.passwordConfirmation);
+        await register(formData.email, formData.password, formData.name);
         toast({ title: 'Account created successfully!' });
       }
       navigate('/');
