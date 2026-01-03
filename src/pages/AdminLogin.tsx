@@ -13,6 +13,16 @@ export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<string>("");
+
+  useEffect(() => {
+    const checkConnection = async () => {
+      const isConnected = await testSupabaseConnection();
+      setConnectionStatus(isConnected ? "✓ Connected" : "✗ Connection Failed");
+    };
+
+    checkConnection();
+  }, []);
 
   if (isLoading) {
     return (
