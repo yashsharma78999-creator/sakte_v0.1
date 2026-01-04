@@ -65,6 +65,7 @@ export default function AdminInventory() {
         stock_quantity: product.stock_quantity,
         sku: product.sku || "",
       });
+      setPreviewUrl(product.image_url || "");
     } else {
       setEditingProduct(null);
       setFormData({
@@ -77,7 +78,9 @@ export default function AdminInventory() {
         stock_quantity: 0,
         sku: "",
       });
+      setPreviewUrl("");
     }
+    setSelectedFile(null);
     setIsDialogOpen(true);
   };
 
