@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import CartDrawer from "@/components/CartDrawer";
 import ProtectedAdminRoute from "@/components/ProtectedAdminRoute";
+import { migrationService } from "@/services/migrations";
 import Index from "./pages/Index";
 import Store from "./pages/Store";
 import ProductPage from "./pages/ProductPage";
@@ -24,6 +26,15 @@ import Orders from "./pages/Orders";
 
 const queryClient = new QueryClient();
 
+// Initialize the app with seed data
+const AppInitializer = ({ children }: { children: React.ReactNode }) => {
+  useEffect(() => {
+    migrationService.seedInitialProducts();
+  }, []);
+
+  return <>{children}</>;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -32,8 +43,9 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <CartDrawer />
-            <Routes>
+            <AppInitializer>
+              <CartDrawer />
+              <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/store" element={<Store />} />
               <Route path="/product/:id" element={<ProductPage />} />
@@ -78,7 +90,8 @@ const App = () => (
               />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
-            </Routes>
+              </Routes>
+            </AppInitializer>
           </BrowserRouter>
         </TooltipProvider>
       </CartProvider>

@@ -1,32 +1,40 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Star, Filter, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/Layout";
-import productJersey from "@/assets/product-jersey.jpg";
-import productBoots from "@/assets/product-boots.jpg";
-import productBall from "@/assets/product-ball.jpg";
-import productGloves from "@/assets/product-gloves.jpg";
-
-const allProducts = [
-  { id: 1, name: "Pro Team Jersey", price: 89.99, image: productJersey, rating: 4.8, category: "Jerseys" },
-  { id: 2, name: "Elite Football Boots", price: 199.99, image: productBoots, rating: 4.9, category: "Boots" },
-  { id: 3, name: "Official Match Ball", price: 149.99, image: productBall, rating: 4.7, category: "Footballs" },
-  { id: 4, name: "Pro Goalkeeper Gloves", price: 79.99, image: productGloves, rating: 4.6, category: "Accessories" },
-  { id: 5, name: "Home Kit Jersey", price: 79.99, image: productJersey, rating: 4.5, category: "Jerseys" },
-  { id: 6, name: "Speed Pro Boots", price: 169.99, image: productBoots, rating: 4.8, category: "Boots" },
-  { id: 7, name: "Training Football", price: 39.99, image: productBall, rating: 4.4, category: "Footballs" },
-  { id: 8, name: "Field Player Gloves", price: 34.99, image: productGloves, rating: 4.3, category: "Accessories" },
-];
-
-const categories = ["All", "Jerseys", "Boots", "Footballs", "Accessories"];
+import { productService } from "@/services/database";
+import { Product } from "@/types/database";
 
 const Store = () => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortBy, setSortBy] = useState("featured");
   const [showFilters, setShowFilters] = useState(false);
+  const [categories, setCategories] = useState<string[]>(["All"]);
 
-  const filteredProducts = allProducts.filter(
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        setIsLoading(true);
+        const data = await productService.getAll();
+        setProducts(data);
+
+        // Extract unique categories
+        const uniqueCategories = ["All", ...new Set(data.map((p) => p.category))];
+        setCategories(uniqueCategories);
+      } catch (error) {
+        console.error("Error loading products:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProducts();
+  }, []);
+
+  const filteredProducts = products.filter(
     (product) => selectedCategory === "All" || product.category === selectedCategory
   );
 
@@ -37,7 +45,7 @@ const Store = () => {
       case "price-high":
         return b.price - a.price;
       case "rating":
-        return b.rating - a.rating;
+        return 4.7 - 4.7; // All have same rating in DB
       default:
         return 0;
     }
@@ -132,38 +140,49 @@ const Store = () => {
 
           {/* Products Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {sortedProducts.map((product) => (
-              <Link
-                key={product.id}
-                to={`/product/${product.id}`}
-                className="group bg-card rounded-xl overflow-hidden border border-border hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-              >
-                <div className="aspect-square overflow-hidden bg-muted">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                </div>
-                <div className="p-4">
-                  <span className="text-xs text-muted-foreground uppercase tracking-wider">
-                    {product.category}
-                  </span>
-                  <h3 className="font-semibold text-card-foreground mt-1 group-hover:text-accent transition-colors">
-                    {product.name}
-                  </h3>
-                  <div className="flex items-center justify-between mt-3">
-                    <span className="text-lg font-bold text-foreground">
-                      ${product.price}
+            {isLoading ? (
+              <div className="col-span-full text-center py-12">
+                <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-border border-t-primary mx-auto" />
+                <p className="text-muted-foreground">Loading products...</p>
+              </div>
+            ) : sortedProducts.length > 0 ? (
+              sortedProducts.map((product) => (
+                <Link
+                  key={product.id}
+                  to={`/product/${product.id}`}
+                  className="group bg-card rounded-xl overflow-hidden border border-border hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                >
+                  <div className="aspect-square overflow-hidden bg-muted">
+                    <img
+                      src={product.image_url || ""}
+                      alt={product.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <span className="text-xs text-muted-foreground uppercase tracking-wider">
+                      {product.category}
                     </span>
-                    <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 fill-accent text-accent" />
-                      <span className="text-sm text-muted-foreground">{product.rating}</span>
+                    <h3 className="font-semibold text-card-foreground mt-1 group-hover:text-accent transition-colors">
+                      {product.name}
+                    </h3>
+                    <div className="flex items-center justify-between mt-3">
+                      <span className="text-lg font-bold text-foreground">
+                        ₹{product.price.toFixed(2)}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <Star className="w-4 h-4 fill-accent text-accent" />
+                        <span className="text-sm text-muted-foreground">4.7</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12">
+                <p className="text-muted-foreground">No products found in this category</p>
+              </div>
+            )}
           </div>
         </div>
       </section>

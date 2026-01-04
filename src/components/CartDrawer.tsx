@@ -8,11 +8,18 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const CartDrawer = () => {
+  const navigate = useNavigate();
   const { items, itemCount, total, isOpen, setIsOpen, removeItem, updateQuantity, clearCart } = useCart();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+
+  const handleProceedCheckout = () => {
+    setIsCheckingOut(true);
+    setIsOpen(false);
+    navigate('/checkout');
+  };
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -78,7 +85,7 @@ const CartDrawer = () => {
                         </button>
                       </div>
                       <span className="font-bold text-foreground text-right">
-                        ${(item.product.price * item.quantity).toFixed(2)}
+                        ₹{(item.product.price * item.quantity).toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -96,7 +103,7 @@ const CartDrawer = () => {
             <div className="border-t border-border pt-4 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Subtotal</span>
-                <span className="text-2xl font-bold text-foreground">${total.toFixed(2)}</span>
+                <span className="text-2xl font-bold text-foreground">₹{total.toFixed(2)}</span>
               </div>
 
               <Button
@@ -104,12 +111,7 @@ const CartDrawer = () => {
                 className="w-full"
                 size="lg"
                 disabled={isCheckingOut}
-                onClick={() => {
-                  setIsCheckingOut(true);
-                  setTimeout(() => {
-                    setIsCheckingOut(false);
-                  }, 2000);
-                }}
+                onClick={handleProceedCheckout}
               >
                 {isCheckingOut ? (
                   <>

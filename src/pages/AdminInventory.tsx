@@ -12,14 +12,18 @@ import {
 } from "@/components/ui/dialog";
 import { Product } from "@/types/database";
 import { productService } from "@/services/database";
-import { Plus, Edit2, Trash2, AlertCircle } from "lucide-react";
+import { storageService } from "@/services/storage";
+import { Plus, Edit2, Trash2, AlertCircle, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
 export default function AdminInventory() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -61,6 +65,7 @@ export default function AdminInventory() {
         stock_quantity: product.stock_quantity,
         sku: product.sku || "",
       });
+      setPreviewUrl(product.image_url || "");
     } else {
       setEditingProduct(null);
       setFormData({
@@ -73,37 +78,65 @@ export default function AdminInventory() {
         stock_quantity: 0,
         sku: "",
       });
+      setPreviewUrl("");
     }
+    setSelectedFile(null);
     setIsDialogOpen(true);
   };
 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setEditingProduct(null);
+    setSelectedFile(null);
+    setPreviewUrl("");
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
+      setIsUploading(true);
+      let imageUrl = formData.image_url;
+
+      // Upload image if a new file was selected
+      if (selectedFile) {
+        try {
+          imageUrl = await storageService.uploadProductImage(selectedFile);
+        } catch (error) {
+          toast.error("Failed to upload image");
+          setIsUploading(false);
+          return;
+        }
+      }
+
+      const productData = {
+        ...formData,
+        image_url: imageUrl,
+        price: parseFloat(formData.price.toString()),
+        original_price: formData.original_price
+          ? parseFloat(formData.original_price.toString())
+          : null,
+        stock_quantity: parseInt(formData.stock_quantity.toString()),
+      };
+
       if (editingProduct) {
-        await productService.update(editingProduct.id, {
-          ...formData,
-          price: parseFloat(formData.price.toString()),
-          original_price: formData.original_price
-            ? parseFloat(formData.original_price.toString())
-            : null,
-          stock_quantity: parseInt(formData.stock_quantity.toString()),
-        });
+        await productService.update(editingProduct.id, productData);
         toast.success("Product updated successfully");
       } else {
         await productService.create({
-          ...formData,
-          price: parseFloat(formData.price.toString()),
-          original_price: formData.original_price
-            ? parseFloat(formData.original_price.toString())
-            : null,
-          stock_quantity: parseInt(formData.stock_quantity.toString()),
+          ...productData,
           is_active: true,
         });
         toast.success("Product created successfully");
@@ -113,6 +146,8 @@ export default function AdminInventory() {
     } catch (error) {
       console.error("Error saving product:", error);
       toast.error("Failed to save product");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -257,27 +292,71 @@ export default function AdminInventory() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Image URL</label>
-                  <Input
-                    value={formData.image_url}
-                    onChange={(e) =>
-                      setFormData({ ...formData, image_url: e.target.value })
-                    }
-                  />
+                  <label className="text-sm font-medium">Product Image</label>
+                  <div className="space-y-3">
+                    {/* Image Preview */}
+                    {previewUrl && (
+                      <div className="relative w-full h-48 border rounded-lg overflow-hidden bg-gray-100">
+                        <img
+                          src={previewUrl}
+                          alt="Product preview"
+                          className="w-full h-full object-cover"
+                        />
+                        {selectedFile && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedFile(null);
+                              setPreviewUrl(formData.image_url || "");
+                            }}
+                            className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded hover:bg-red-600"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* File Upload Input */}
+                    <div className="flex items-center justify-center w-full border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-400 transition-colors">
+                      <label className="w-full cursor-pointer flex flex-col items-center justify-center">
+                        <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                        <span className="text-sm font-medium text-gray-700">
+                          Click to upload image
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          JPG, PNG or WebP (Max 5MB)
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileSelect}
+                          className="hidden"
+                          disabled={isUploading}
+                        />
+                      </label>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex gap-2 pt-4">
                   <Button
                     type="submit"
                     className="flex-1"
+                    disabled={isUploading}
                   >
-                    {editingProduct ? "Update Product" : "Create Product"}
+                    {isUploading
+                      ? "Uploading..."
+                      : editingProduct
+                      ? "Update Product"
+                      : "Create Product"}
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
                     onClick={handleCloseDialog}
                     className="flex-1"
+                    disabled={isUploading}
                   >
                     Cancel
                   </Button>
