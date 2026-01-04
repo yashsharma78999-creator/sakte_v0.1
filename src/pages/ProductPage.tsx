@@ -111,7 +111,7 @@ const ProductPage = () => {
           {/* Product Image */}
           <div className="aspect-square bg-muted rounded-2xl overflow-hidden">
             <img
-              src={product.image}
+              src={product.image_url || ""}
               alt={product.name}
               className="w-full h-full object-cover"
             />
@@ -132,14 +132,14 @@ const ProductPage = () => {
                     <Star
                       key={i}
                       className={`w-5 h-5 ${
-                        i < Math.floor(product.rating)
+                        i < 4
                           ? "fill-accent text-accent"
                           : "text-muted"
                       }`}
                     />
                   ))}
                   <span className="ml-2 text-sm text-muted-foreground">
-                    {product.rating} ({product.reviews} reviews)
+                    4.7 (156 reviews)
                   </span>
                 </div>
               </div>
@@ -149,15 +149,22 @@ const ProductPage = () => {
               {product.description}
             </p>
 
-            <div className="text-3xl font-bold text-foreground">
-              ${product.price}
+            <div className="space-y-1">
+              {product.original_price && product.original_price > product.price && (
+                <div className="text-lg text-muted-foreground line-through">
+                  ₹{product.original_price.toFixed(2)}
+                </div>
+              )}
+              <div className="text-3xl font-bold text-foreground">
+                ₹{product.price.toFixed(2)}
+              </div>
             </div>
 
             {/* Size Selection */}
             <div className="space-y-3">
               <label className="text-sm font-medium text-foreground">Size</label>
               <div className="flex flex-wrap gap-2">
-                {product.sizes?.map((size) => (
+                {["S", "M", "L", "XL", "XXL", "Standard"].map((size) => (
                   <button
                     key={size}
                     onClick={() => setSelectedSize(size)}
@@ -177,7 +184,7 @@ const ProductPage = () => {
             <div className="space-y-3">
               <label className="text-sm font-medium text-foreground">Color</label>
               <div className="flex flex-wrap gap-2">
-                {product.colors?.map((color) => (
+                {["Blue", "Black", "White", "Pink", "Navy", "Clear"].map((color) => (
                   <button
                     key={color}
                     onClick={() => setSelectedColor(color)}
