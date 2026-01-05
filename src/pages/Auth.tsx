@@ -71,7 +71,7 @@ const Auth = () => {
             <p className="text-muted-foreground mt-2">
               {isLogin
                 ? 'Sign in to access your account'
-                : 'Join the FIFAZone community'}
+                : 'Join the JP Skating community'}
             </p>
           </div>
 
