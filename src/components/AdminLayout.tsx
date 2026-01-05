@@ -39,6 +39,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       href: "/admin/inventory",
     },
     {
+      label: "Payment Options",
+      icon: CreditCard,
+      href: "/admin/payment-options",
+    },
+    {
       label: "Memberships",
       icon: Users,
       href: "/admin/memberships",
