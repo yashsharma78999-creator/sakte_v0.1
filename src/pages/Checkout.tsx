@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
@@ -6,8 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Layout from "@/components/Layout";
-import { orderService, orderItemService } from "@/services/database";
+import { orderService, orderItemService, paymentOptionsService } from "@/services/database";
 import { paymentService } from "@/services/payment";
+import { PaymentOption } from "@/types/database";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
@@ -16,6 +17,8 @@ export default function Checkout() {
   const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { items, total, clearCart } = useCart();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentOption[]>([]);
+  const [isLoadingPaymentMethods, setIsLoadingPaymentMethods] = useState(true);
 
   const [formData, setFormData] = useState({
     fullName: user?.full_name || "",
@@ -26,7 +29,32 @@ export default function Checkout() {
     state: "",
     zipcode: "",
     notes: "",
+    paymentMethod: "payu",
   });
+
+  useEffect(() => {
+    loadPaymentMethods();
+  }, []);
+
+  const loadPaymentMethods = async () => {
+    try {
+      setIsLoadingPaymentMethods(true);
+      const methods = await paymentOptionsService.getEnabled();
+      setPaymentMethods(methods);
+      // Set the first enabled payment method as default if available
+      if (methods.length > 0) {
+        setFormData((prev) => ({
+          ...prev,
+          paymentMethod: methods[0].provider,
+        }));
+      }
+    } catch (error) {
+      console.error("Error loading payment methods:", error);
+      toast.error("Failed to load payment methods");
+    } finally {
+      setIsLoadingPaymentMethods(false);
+    }
+  };
 
   // Show loading while authentication is being checked
   if (isAuthLoading) {
