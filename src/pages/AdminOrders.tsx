@@ -137,6 +137,62 @@ export default function AdminOrders() {
     return colors[status] || "bg-gray-100 text-gray-800";
   };
 
+  const generateReceiptData = (order: any): ReceiptData => {
+    const shippingAddress = order.shipping_address || {};
+    return {
+      orderId: order.id,
+      orderNumber: order.order_number,
+      orderDate: order.created_at,
+      customerName: shippingAddress.name || "N/A",
+      customerEmail: order.customer_email || shippingAddress.email || "N/A",
+      customerPhone: order.customer_phone || shippingAddress.phone || "N/A",
+      items: (order.order_items || []).map((item: any) => ({
+        name: item.products?.name || "Product",
+        quantity: item.quantity,
+        price: item.price,
+      })),
+      subtotal: order.total_amount,
+      shipping: 0,
+      total: order.total_amount,
+      status: order.status,
+      paymentStatus: order.payment_status,
+      shippingAddress: {
+        address: shippingAddress.address || "",
+        city: shippingAddress.city || "",
+        state: shippingAddress.state || "",
+        zip: shippingAddress.zip || "",
+      },
+    };
+  };
+
+  const handleDownloadReceipt = async (order: any) => {
+    try {
+      setIsGeneratingReceipt(true);
+      const receiptData = generateReceiptData(order);
+      await receiptService.generateAndDownloadPDF(receiptData);
+      toast.success("Receipt downloaded successfully");
+    } catch (error) {
+      console.error("Error downloading receipt:", error);
+      toast.error("Failed to download receipt");
+    } finally {
+      setIsGeneratingReceipt(false);
+    }
+  };
+
+  const handlePrintReceipt = async (order: any) => {
+    try {
+      setIsGeneratingReceipt(true);
+      const receiptData = generateReceiptData(order);
+      await receiptService.printReceipt(receiptData);
+      toast.success("Receipt opened for printing");
+    } catch (error) {
+      console.error("Error printing receipt:", error);
+      toast.error("Failed to print receipt");
+    } finally {
+      setIsGeneratingReceipt(false);
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
