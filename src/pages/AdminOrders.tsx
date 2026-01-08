@@ -73,11 +73,12 @@ export default function AdminOrders() {
   const exportOrders = () => {
     try {
       const csv = [
-        ["Order #", "Date", "Customer", "Amount", "Status", "Payment Status"],
+        ["Order #", "Date", "Customer Email", "Customer Phone", "Amount", "Status", "Payment Status"],
         ...filteredOrders.map((order) => [
           order.order_number,
           new Date(order.created_at).toLocaleDateString(),
-          order.user_id || "Guest",
+          order.customer_email || "N/A",
+          order.customer_phone || "N/A",
           order.total_amount,
           order.status,
           order.payment_status,
