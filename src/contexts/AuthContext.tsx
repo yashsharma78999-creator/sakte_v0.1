@@ -109,7 +109,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
         } catch (profileError) {
           const errorMsg = profileError instanceof Error ? profileError.message : String(profileError);
-          console.warn("[AUTH] Profile fetch error (using fallback):", errorMsg);
+          console.debug("[AUTH] Profile fetch failed, using fallback:", errorMsg);
           // Fallback: create a minimal user object if profile fetch fails
           const fallbackUser = {
             id: authUser.id,
