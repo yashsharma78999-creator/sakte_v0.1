@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user?.role, resetInactivityTimer]);
 
-  const fetchProfileWithTimeout = useCallback(async (userId: string, timeoutMs = 15000) => {
+  const fetchProfileWithTimeout = useCallback(async (userId: string, timeoutMs = 30000) => {
     try {
       const profilePromise = profileService.getById(userId);
       const timeoutPromise = new Promise<never>((_, reject) =>
@@ -80,7 +80,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       return await Promise.race([profilePromise, timeoutPromise]);
     } catch (error) {
-      console.error("[AUTH] Profile fetch failed:", error);
+      console.debug("[AUTH] Profile fetch timeout or error (will use fallback):", error);
       throw error;
     }
   }, []);
@@ -94,7 +94,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (authUser) {
         try {
           console.log("[AUTH] Fetching profile for user:", authUser.id);
-          const profile = await fetchProfileWithTimeout(authUser.id, 15000);
+          const profile = await fetchProfileWithTimeout(authUser.id, 30000);
 
           console.log("[AUTH] Profile loaded successfully");
           const newUser = {
@@ -109,7 +109,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
         } catch (profileError) {
           const errorMsg = profileError instanceof Error ? profileError.message : String(profileError);
-          console.warn("[AUTH] Profile fetch error (using fallback):", errorMsg);
+          console.debug("[AUTH] Profile fetch failed, using fallback:", errorMsg);
           // Fallback: create a minimal user object if profile fetch fails
           const fallbackUser = {
             id: authUser.id,
@@ -150,7 +150,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (session?.user) {
         try {
           console.log("[AUTH] Fetching profile for user:", session.user.id);
-          const profile = await fetchProfileWithTimeout(session.user.id, 15000);
+          const profile = await fetchProfileWithTimeout(session.user.id, 30000);
 
           console.log("[AUTH] Profile loaded:", profile);
           const newUser = {
@@ -165,7 +165,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
         } catch (error) {
           const errorMsg = error instanceof Error ? error.message : String(error);
-          console.warn("[AUTH] Error fetching profile (using fallback):", errorMsg);
+          console.debug("[AUTH] Profile fetch failed in auth state change, using fallback:", errorMsg);
           // Fallback: create a minimal user object if profile fetch fails
           const fallbackUser = {
             id: session.user.id,
@@ -219,7 +219,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (data.user) {
         try {
           console.log("[AUTH] Fetching profile for user:", data.user.id);
-          const profile = await fetchProfileWithTimeout(data.user.id, 15000);
+          const profile = await fetchProfileWithTimeout(data.user.id, 30000);
 
           console.log("[AUTH] Profile fetched:", profile);
           setUser({
@@ -228,7 +228,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           });
         } catch (profileError) {
           const errorMsg = profileError instanceof Error ? profileError.message : String(profileError);
-          console.warn("[AUTH] Profile fetch error (using fallback):", errorMsg);
+          console.debug("[AUTH] Profile fetch failed during login, using fallback:", errorMsg);
           // Even if profile fetch fails, user is authenticated - allow login to proceed
           setUser({
             id: data.user.id,
@@ -292,7 +292,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const profile = await Promise.race([
             profilePromise,
             new Promise<never>((_, reject) =>
-              setTimeout(() => reject(new Error("Profile creation timeout")), 15000)
+              setTimeout(() => reject(new Error("Profile creation timeout")), 30000)
             ),
           ]);
 
@@ -303,7 +303,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           });
         } catch (profileError) {
           const errorMsg = profileError instanceof Error ? profileError.message : String(profileError);
-          console.warn("[AUTH] Profile creation error (using fallback):", errorMsg);
+          console.debug("[AUTH] Profile creation failed, using fallback:", errorMsg);
           // Still set user even if profile creation fails
           setUser({
             id: data.user.id,
