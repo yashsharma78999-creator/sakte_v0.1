@@ -158,6 +158,12 @@ export default function Checkout() {
 
       // Add order items - handle both old and new cart item structures
       for (const item of items) {
+        // Skip memberships from order items as they don't have real product IDs
+        // Memberships are included in the order total but tracked separately
+        if (item.product.category === 'Membership') {
+          continue;
+        }
+
         const productId = item.product?.id || item.id;
         const productPrice = item.product?.price || item.price;
 
