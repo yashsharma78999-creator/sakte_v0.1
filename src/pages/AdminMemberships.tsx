@@ -379,18 +379,34 @@ export default function AdminMemberships() {
           </div>
         ) : memberships.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {memberships.map((membership) => (
+            {memberships.map((membership) => {
+              const iconOption = iconOptions.find((opt) => opt.name === membership.icon);
+              const IconComponent = iconOption?.Icon || Star;
+              const colorOption = colorOptions.find((opt) => opt.name === membership.color);
+
+              return (
               <Card key={membership.id}>
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle>{membership.name}</CardTitle>
-                      <p className="text-xs text-gray-600 mt-1">
-                        {membership.duration_days} days
-                      </p>
+                    <div className="flex items-start gap-3 flex-1">
+                      <div
+                        className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                        style={{ backgroundColor: colorOption?.hex + "20" }}
+                      >
+                        <IconComponent
+                          className="w-6 h-6"
+                          style={{ color: colorOption?.hex }}
+                        />
+                      </div>
+                      <div>
+                        <CardTitle>{membership.name}</CardTitle>
+                        <p className="text-xs text-gray-600 mt-1">
+                          {membership.duration_days} days
+                        </p>
+                      </div>
                     </div>
                     <span
-                      className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                      className={`inline-block px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
                         membership.is_active
                           ? "bg-green-100 text-green-800"
                           : "bg-gray-100 text-gray-800"
@@ -452,7 +468,8 @@ export default function AdminMemberships() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            );
+            })}
           </div>
         ) : (
           <Card>
