@@ -518,7 +518,7 @@ const Index = () => {
       <section className="py-16 md:py-24 bg-gradient-to-br from-primary via-primary to-primary/90">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
-            Join the <span className="text-accent">JP Skating</span> Community
+            Join the <span className="text-accent">Skating</span> Community
           </h2>
           <p className="text-primary-foreground/80 max-w-2xl mx-auto mb-8">
             Subscribe to get exclusive deals, early access to new arrivals, and insider tips from pro skaters.
