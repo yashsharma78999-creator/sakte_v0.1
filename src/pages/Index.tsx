@@ -92,6 +92,26 @@ const categories = [{
   count: "300+"
 }];
 const Index = () => {
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadFeaturedProducts = async () => {
+      try {
+        setIsLoading(true);
+        const products = await productService.getAll();
+        setFeaturedProducts(products.slice(0, 4));
+      } catch (error) {
+        console.error("Error loading featured products:", error);
+        setFeaturedProducts([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadFeaturedProducts();
+  }, []);
+
   return <Layout>
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
