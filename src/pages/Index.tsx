@@ -465,7 +465,7 @@ const Index = () => {
               What Coaches Say
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Hear from top coaches and trainers who trust JP Skating for their teams.
+              Hear from top coaches and trainers who trust us for their teams.
             </p>
           </div>
 
