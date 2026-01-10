@@ -36,7 +36,7 @@ const testimonials = [{
   name: "Coach Elena Petrova",
   role: "Head Coach, Skating Academy",
   image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&h=150&fit=crop&crop=face",
-  quote: "The quality of equipment from JP Skating Club is unmatched. Our academy skaters have shown remarkable improvement since we switched to their gear.",
+  quote: "The quality of equipment is unmatched. Our academy skaters have shown remarkable improvement since we switched to their gear.",
   rating: 5
 }, {
   name: "Coach Michael Chen",
