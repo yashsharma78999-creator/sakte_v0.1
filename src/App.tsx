@@ -25,6 +25,7 @@ import AdminPaymentOptions from "./pages/AdminPaymentOptions";
 import AdminMemberships from "./pages/AdminMemberships";
 import Checkout from "./pages/Checkout";
 import Orders from "./pages/Orders";
+import UserProfile from "./pages/UserProfile";
 
 const queryClient = new QueryClient();
 
