@@ -102,6 +102,14 @@ const App = () => (
                   </ProtectedAdminRoute>
                 }
               />
+              <Route
+                path="/admin/subscribers"
+                element={
+                  <ProtectedAdminRoute>
+                    <AdminSubscribers />
+                  </ProtectedAdminRoute>
+                }
+              />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
               </Routes>
