@@ -7,6 +7,7 @@ export interface CartProduct {
   price: number;
   image: string;
   category: string;
+  membershipId?: number;
 }
 
 export interface CartItem {
