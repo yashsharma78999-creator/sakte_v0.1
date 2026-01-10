@@ -31,9 +31,11 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Session timeout configuration (30 minutes of inactivity)
-const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
-const SESSION_WARNING_MS = 25 * 60 * 1000;
+// Session timeout configuration - DISABLED for permanent login
+// Set to very high value (24 hours) to prevent unwanted logouts
+// Users will be kept logged in as long as their token is valid
+const SESSION_TIMEOUT_MS = 24 * 60 * 60 * 1000; // 24 hours
+const SESSION_WARNING_MS = 23 * 60 * 60 * 1000; // 23 hours
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
