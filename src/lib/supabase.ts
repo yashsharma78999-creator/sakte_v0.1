@@ -39,7 +39,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 console.log("[SUPABASE] Client initialized successfully");
 console.log("[SUPABASE] Base URL:", supabaseUrl);
 
-// Test connectivity
 export async function testSupabaseConnection() {
   try {
     console.log("[SUPABASE] Testing connection...");
