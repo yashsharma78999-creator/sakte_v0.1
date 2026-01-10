@@ -23,6 +23,8 @@ import AdminOrders from "./pages/AdminOrders";
 import AdminInventory from "./pages/AdminInventory";
 import AdminPaymentOptions from "./pages/AdminPaymentOptions";
 import AdminMemberships from "./pages/AdminMemberships";
+import AdminSubscribers from "./pages/AdminSubscribers";
+import SupabaseTest from "./pages/SupabaseTest";
 import Checkout from "./pages/Checkout";
 import Orders from "./pages/Orders";
 import UserProfile from "./pages/UserProfile";
@@ -59,6 +61,7 @@ const App = () => (
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/orders" element={<Orders />} />
               <Route path="/profile" element={<UserProfile />} />
+              <Route path="/test/supabase" element={<SupabaseTest />} />
               {/* Admin Routes */}
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route
@@ -98,6 +101,14 @@ const App = () => (
                 element={
                   <ProtectedAdminRoute>
                     <AdminMemberships />
+                  </ProtectedAdminRoute>
+                }
+              />
+              <Route
+                path="/admin/subscribers"
+                element={
+                  <ProtectedAdminRoute>
+                    <AdminSubscribers />
                   </ProtectedAdminRoute>
                 }
               />

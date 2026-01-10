@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { paymentOptionsService } from "@/services/database";
+import { paymentOptionsService, userMembershipService, membershipService } from "@/services/database";
 
 // Default PayU Configuration - Fallback if no payment option is configured
 const DEFAULT_PAYU_KEY = import.meta.env.VITE_PAYU_KEY || "YOUR_PAYU_KEY";
@@ -26,6 +26,77 @@ export interface PaymentResponse {
   message: string;
   data?: any;
 }
+
+// Helper function to extract and process memberships from order
+const processMembershipsForOrder = async (orderId: number, userId: string | null) => {
+  if (!userId) return;
+
+  try {
+    // Fetch the order to get membership details
+    const { data: order } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("id", orderId)
+      .single();
+
+    if (!order || !order.notes) return;
+
+    // Parse membership IDs from order notes
+    // Format: "MEMBERSHIPS:[1,2,3]|other notes"
+    const membershipMatch = order.notes.match(/MEMBERSHIPS:(\[[\d,\s]*\])/);
+    if (!membershipMatch) {
+      console.log(`[PAYMENT] No membership IDs found in order notes: ${order.notes}`);
+      return;
+    }
+
+    const membershipIds = JSON.parse(membershipMatch[1]) as number[];
+    console.log(`[PAYMENT] Extracted membership IDs: ${JSON.stringify(membershipIds)}`);
+
+    // Create user_membership records for each membership
+    const now = new Date();
+    console.log(`[PAYMENT] Processing ${membershipIds.length} memberships for user ${userId}`);
+
+    for (const membershipId of membershipIds) {
+      try {
+        // Get membership details to know duration
+        console.log(`[PAYMENT] Fetching membership ${membershipId}...`);
+        const membership = await membershipService.getById(membershipId);
+        console.log(`[PAYMENT] Membership details:`, membership);
+
+        if (membership) {
+          // Calculate end date
+          const endDate = new Date(now);
+          endDate.setDate(endDate.getDate() + membership.duration_days);
+
+          console.log(`[PAYMENT] Creating user_membership with end_date: ${endDate.toISOString()}`);
+
+          // Create user membership
+          const userMem = await userMembershipService.create({
+            user_id: userId,
+            membership_id: membershipId,
+            start_date: now.toISOString(),
+            end_date: endDate.toISOString(),
+            is_active: true,
+          });
+
+          console.log(
+            `[PAYMENT] ✅ Created user_membership for user ${userId}, membership ${membershipId}:`,
+            userMem
+          );
+        } else {
+          console.warn(`[PAYMENT] Membership ${membershipId} not found`);
+        }
+      } catch (error) {
+        console.error(
+          `[PAYMENT] ❌ Failed to create membership ${membershipId} for user ${userId}:`,
+          error
+        );
+      }
+    }
+  } catch (error) {
+    console.error("[PAYMENT] Failed to process memberships:", error);
+  }
+};
 
 // Generate SHA512 hash for PayU
 const generateHash = async (
@@ -217,7 +288,7 @@ export const paymentService = {
         })
         .eq("transaction_id", txnid);
 
-      // If payment is successful, update order
+      // If payment is successful, update order and process memberships
       if (payuResponse.status === "success") {
         const { data: transaction } = await supabase
           .from("payment_transactions")
@@ -226,6 +297,13 @@ export const paymentService = {
           .single();
 
         if (transaction) {
+          // Get order details to get user_id
+          const { data: order } = await supabase
+            .from("orders")
+            .select("user_id")
+            .eq("id", transaction.order_id)
+            .single();
+
           await supabase
             .from("orders")
             .update({
@@ -234,6 +312,11 @@ export const paymentService = {
               status: "confirmed",
             })
             .eq("id", transaction.order_id);
+
+          // Process memberships if user is authenticated
+          if (order?.user_id) {
+            await processMembershipsForOrder(transaction.order_id, order.user_id);
+          }
         }
       }
 
@@ -255,7 +338,7 @@ export const paymentService = {
   },
 
   // For testing purposes - simulate payment success
-  async simulatePaymentSuccess(orderId: number, amount: number, email: string) {
+  async simulatePaymentSuccess(orderId: number, amount: number, email: string, userId?: string) {
     try {
       const txnid = `SIM_${orderId}_${Date.now()}`;
 
@@ -278,6 +361,11 @@ export const paymentService = {
           status: "confirmed",
         })
         .eq("id", orderId);
+
+      // Process memberships if user is provided
+      if (userId) {
+        await processMembershipsForOrder(orderId, userId);
+      }
 
       return {
         status: "success",

@@ -140,11 +140,13 @@ export default function Checkout() {
       // Include membership details in order notes
       const membershipItems = items.filter(item => item.product.category === 'Membership');
       let orderNotes = formData.notes;
+      let membershipIds: number[] = [];
       if (membershipItems.length > 0) {
+        membershipIds = membershipItems.map(item => item.product.membershipId || (item.product.id - 1000));
         const membershipList = membershipItems
           .map(item => `${item.product.name} (Qty: ${item.quantity})`)
           .join(', ');
-        orderNotes = `Memberships: ${membershipList}${formData.notes ? '. ' + formData.notes : ''}`;
+        orderNotes = `MEMBERSHIPS:${JSON.stringify(membershipIds)}|Memberships: ${membershipList}${formData.notes ? '. ' + formData.notes : ''}`;
       }
 
       const order = await orderService.create({
@@ -190,7 +192,8 @@ export default function Checkout() {
       const paymentResult = await paymentService.simulatePaymentSuccess(
         order.id,
         total,
-        user!.email
+        user!.email,
+        user!.id
       );
 
       if (paymentResult.status === "success") {
