@@ -136,6 +136,17 @@ export default function Checkout() {
 
       // Create order
       const orderNumber = `ORD-${Date.now()}`;
+
+      // Include membership details in order notes
+      const membershipItems = items.filter(item => item.product.category === 'Membership');
+      let orderNotes = formData.notes;
+      if (membershipItems.length > 0) {
+        const membershipList = membershipItems
+          .map(item => `${item.product.name} (Qty: ${item.quantity})`)
+          .join(', ');
+        orderNotes = `Memberships: ${membershipList}${formData.notes ? '. ' + formData.notes : ''}`;
+      }
+
       const order = await orderService.create({
         user_id: user!.id,
         order_number: orderNumber,
@@ -151,7 +162,7 @@ export default function Checkout() {
           zip: formData.zipcode,
           phone: formData.phone,
         },
-        notes: formData.notes,
+        notes: orderNotes,
         customer_email: formData.email,
         customer_phone: formData.phone,
       });
