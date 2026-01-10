@@ -87,6 +87,21 @@ const features = [
 ];
 
 const Programme = () => {
+  const { addItem } = useCart();
+
+  const handleAddToCart = (tier: typeof membershipTiers[0]) => {
+    addItem(
+      {
+        id: membershipTiers.indexOf(tier) + 1000, // Use unique IDs for memberships
+        name: `${tier.name} Membership`,
+        price: tier.price,
+        image: 'https://images.unsplash.com/photo-1556821552-5ff41cf930b2?w=400&h=400&fit=crop',
+        category: 'Membership',
+      },
+      1
+    );
+  };
+
   return (
     <Layout>
       {/* Hero Section */}
