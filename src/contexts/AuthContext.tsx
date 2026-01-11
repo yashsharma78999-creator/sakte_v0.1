@@ -74,7 +74,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user?.role, resetInactivityTimer]);
 
-  const fetchProfileWithTimeout = useCallback(async (userId: string, timeoutMs = 30000) => {
+  const fetchProfileWithTimeout = useCallback(async (userId: string, timeoutMs = 5000) => {
     try {
       const profilePromise = profileService.getById(userId);
       const timeoutPromise = new Promise<never>((_, reject) =>
@@ -97,7 +97,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (authUser) {
         try {
           console.log("[AUTH] Fetching profile for user:", authUser.id);
-          const profile = await fetchProfileWithTimeout(authUser.id, 30000);
+          const profile = await fetchProfileWithTimeout(authUser.id, 5000);
 
           console.log("[AUTH] Profile loaded successfully");
           const newUser = {
@@ -156,7 +156,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (session?.user) {
         try {
           console.log("[AUTH] Fetching profile for user:", session.user.id);
-          const profile = await fetchProfileWithTimeout(session.user.id, 30000);
+          const profile = await fetchProfileWithTimeout(session.user.id, 5000);
 
           console.log("[AUTH] Profile loaded:", profile);
           const newUser = {
@@ -226,7 +226,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (data.user) {
         try {
           console.log("[AUTH] Fetching profile for user:", data.user.id);
-          const profile = await fetchProfileWithTimeout(data.user.id, 30000);
+          const profile = await fetchProfileWithTimeout(data.user.id, 5000);
 
           console.log("[AUTH] Profile fetched:", profile);
           setUser({
@@ -299,7 +299,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const profile = await Promise.race([
             profilePromise,
             new Promise<never>((_, reject) =>
-              setTimeout(() => reject(new Error("Profile creation timeout")), 30000)
+              setTimeout(() => reject(new Error("Profile creation timeout")), 5000)
             ),
           ]);
 

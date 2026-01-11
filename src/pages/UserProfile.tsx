@@ -50,9 +50,21 @@ export default function UserProfile() {
         console.log(`[PROFILE] Loading memberships for user ${user.id}...`);
         const data = await userMembershipService.getByUserId(user.id);
         console.log(`[PROFILE] Loaded ${data.length} memberships:`, data);
-        setMemberships(data);
-        if (data.length > 0) {
-          toast.success(`Loaded ${data.length} membership(s)`);
+
+        // Filter and map memberships to ensure proper structure
+        const validMemberships = (data || []).filter(item => {
+          const hasMembership = item.membership && typeof item.membership === 'object';
+          if (!hasMembership) {
+            console.warn(`[PROFILE] Skipping membership without valid membership object:`, item);
+          }
+          return hasMembership;
+        });
+
+        console.log(`[PROFILE] Valid memberships after filtering: ${validMemberships.length}`);
+        setMemberships(validMemberships);
+
+        if (validMemberships.length > 0) {
+          toast.success(`Loaded ${validMemberships.length} membership(s)`);
         }
       }
     } catch (error) {
@@ -115,36 +127,36 @@ export default function UserProfile() {
       <div className="min-h-screen bg-gradient-to-b from-primary/5 to-transparent py-12 px-4">
         <div className="max-w-6xl mx-auto">
           {/* Profile Header */}
-          <div className="mb-12">
-            <div className="flex items-center justify-between mb-6">
+          <div className="mb-8 sm:mb-12">
+            <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
               <div>
-                <h1 className="text-4xl font-bold text-gray-900">My Profile</h1>
-                <p className="text-gray-600 mt-2">Manage your account and memberships</p>
+                <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">My Profile</h1>
+                <p className="text-sm sm:text-base text-gray-600 mt-2">Manage your account and memberships</p>
               </div>
               <Button
                 onClick={handleLogout}
                 variant="destructive"
-                size="lg"
-                className="gap-2"
+                size="sm"
+                className="gap-2 text-xs sm:text-sm"
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 Logout
               </Button>
             </div>
 
             {/* User Info Card */}
             <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-              <CardContent className="pt-6">
-                <div className="grid md:grid-cols-2 gap-6">
+              <CardContent className="pt-4 sm:pt-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Full Name</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600">Full Name</p>
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1 break-words">
                       {user?.full_name || "Not set"}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Email Address</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">
+                    <p className="text-xs sm:text-sm font-medium text-gray-600">Email Address</p>
+                    <p className="text-xs sm:text-lg font-bold text-gray-900 mt-1 break-all">
                       {user?.email}
                     </p>
                   </div>
@@ -155,28 +167,31 @@ export default function UserProfile() {
 
           {/* Memberships Section */}
           <div>
-            <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+            <div className="flex items-center justify-between mb-6 flex-wrap gap-3 sm:gap-4">
               <div>
-                <h2 className="text-3xl font-bold text-gray-900">My Memberships</h2>
-                <p className="text-gray-600 mt-2">Active and inactive memberships</p>
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">My Memberships</h2>
+                <p className="text-sm sm:text-base text-gray-600 mt-2">Active and inactive memberships</p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Button
                   onClick={handleRefresh}
                   variant="outline"
-                  size="lg"
+                  size="sm"
                   disabled={isRefreshing}
-                  className="gap-2"
+                  className="gap-2 text-xs sm:text-sm"
                 >
-                  <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
-                  {isRefreshing ? "Refreshing..." : "Refresh"}
+                  <RefreshCw className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isRefreshing ? "animate-spin" : ""}`} />
+                  <span className="hidden sm:inline">{isRefreshing ? "Refreshing..." : "Refresh"}</span>
+                  <span className="sm:hidden">{isRefreshing ? "..." : "Refresh"}</span>
                 </Button>
                 <Button
                   onClick={() => navigate("/programme")}
-                  size="lg"
+                  size="sm"
+                  className="gap-1 sm:gap-2 text-xs sm:text-sm"
                 >
-                  <Award className="w-4 h-4 mr-2" />
-                  Browse Memberships
+                  <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Browse Memberships</span>
+                  <span className="sm:hidden">Browse</span>
                 </Button>
               </div>
             </div>
@@ -205,7 +220,7 @@ export default function UserProfile() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                 {memberships.map((userMembership) => (
                   <MembershipCard
                     key={userMembership.id}

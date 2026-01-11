@@ -41,7 +41,7 @@ const Navbar = () => {
               <Snowflake className="w-6 h-6 text-accent-foreground" />
             </div>
             <span className="text-xl md:text-2xl font-bold text-primary-foreground tracking-tight">
-              JP<span className="text-accent">Skating</span>
+              <span className="text-accent">Skating</span>
             </span>
           </Link>
 
