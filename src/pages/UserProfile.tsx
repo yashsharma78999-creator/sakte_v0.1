@@ -4,9 +4,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/Layout";
+import MembershipCard from "@/components/MembershipCard";
 import { userMembershipService, membershipService } from "@/services/database";
 import { Membership, UserMembership } from "@/types/database";
-import { LogOut, Edit2, Calendar, Award, Star, Crown, Flame, Zap, Gift, Trophy, Heart } from "lucide-react";
+import { LogOut, Edit2, Calendar, Award, Star, Crown, Flame, Zap, Gift, Trophy, Heart, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 const iconMap: Record<string, any> = {
