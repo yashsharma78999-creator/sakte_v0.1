@@ -327,28 +327,44 @@ export default function AdminInventory() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Product Image</label>
+                  <label className="text-sm font-medium">Product Images</label>
+                  <p className="text-xs text-gray-500">
+                    Upload multiple images. The first image will be the main product image.
+                  </p>
                   <div className="space-y-3">
-                    {/* Image Preview */}
-                    {previewUrl && (
-                      <div className="relative w-full h-48 border rounded-lg overflow-hidden bg-gray-100">
-                        <img
-                          src={previewUrl}
-                          alt="Product preview"
-                          className="w-full h-full object-cover"
-                        />
-                        {selectedFile && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedFile(null);
-                              setPreviewUrl(formData.image_url || "");
-                            }}
-                            className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded hover:bg-red-600"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        )}
+                    {/* Image Previews Grid */}
+                    {previewUrls.length > 0 && (
+                      <div className="grid grid-cols-3 gap-2">
+                        {previewUrls.map((url, index) => {
+                          const isNewFile =
+                            index >= (formData.images?.length || 0);
+                          return (
+                            <div
+                              key={index}
+                              className="relative w-full aspect-square border rounded-lg overflow-hidden bg-gray-100 group"
+                            >
+                              <img
+                                src={url}
+                                alt={`Product preview ${index + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                              {index === 0 && (
+                                <div className="absolute top-1 left-1 bg-blue-500 text-white px-2 py-1 rounded text-xs font-medium">
+                                  Main
+                                </div>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  removeImage(index, isNewFile)
+                                }
+                                className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
 
@@ -357,10 +373,10 @@ export default function AdminInventory() {
                       <label className="w-full cursor-pointer flex flex-col items-center justify-center">
                         <Upload className="w-8 h-8 text-gray-400 mb-2" />
                         <span className="text-sm font-medium text-gray-700">
-                          Click to upload image
+                          Click to add more images
                         </span>
                         <span className="text-xs text-gray-500">
-                          JPG, PNG or WebP (Max 5MB)
+                          JPG, PNG or WebP (Max 5MB each)
                         </span>
                         <input
                           type="file"
@@ -368,9 +384,16 @@ export default function AdminInventory() {
                           onChange={handleFileSelect}
                           className="hidden"
                           disabled={isUploading}
+                          multiple
                         />
                       </label>
                     </div>
+
+                    {previewUrls.length === 0 && (
+                      <p className="text-xs text-gray-500 text-center py-4">
+                        No images added yet
+                      </p>
+                    )}
                   </div>
                 </div>
 
