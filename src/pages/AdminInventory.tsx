@@ -135,13 +135,21 @@ export default function AdminInventory() {
     try {
       setIsUploading(true);
       let imageUrl = formData.image_url;
+      let images = formData.images || [];
 
-      // Upload image if a new file was selected
-      if (selectedFile) {
+      // Upload new files
+      if (selectedFiles.length > 0) {
         try {
-          imageUrl = await storageService.uploadProductImage(selectedFile);
+          for (const file of selectedFiles) {
+            const url = await storageService.uploadProductImage(file);
+            images.push(url);
+          }
+          // Set the first image as the main image_url
+          if (images.length > 0) {
+            imageUrl = images[0];
+          }
         } catch (error) {
-          toast.error("Failed to upload image");
+          toast.error("Failed to upload images");
           setIsUploading(false);
           return;
         }
@@ -150,6 +158,7 @@ export default function AdminInventory() {
       const productData = {
         ...formData,
         image_url: imageUrl,
+        images: images,
         price: parseFloat(formData.price.toString()),
         original_price: formData.original_price
           ? parseFloat(formData.original_price.toString())
