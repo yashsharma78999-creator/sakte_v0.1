@@ -22,8 +22,8 @@ export default function AdminInventory() {
   const [isUploading, setIsUploading] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string>("");
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -31,6 +31,7 @@ export default function AdminInventory() {
     original_price: 0,
     category: "",
     image_url: "",
+    images: [] as string[],
     stock_quantity: 0,
     sku: "",
   });
