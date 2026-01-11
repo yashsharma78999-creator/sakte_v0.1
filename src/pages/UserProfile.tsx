@@ -35,6 +35,7 @@ export default function UserProfile() {
   const { user, isAuthenticated, logout } = useAuth();
   const [memberships, setMemberships] = useState<(UserMembership & { membership: Membership | null })[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -46,14 +47,33 @@ export default function UserProfile() {
     try {
       setIsLoading(true);
       if (user?.id) {
+        console.log(`[PROFILE] Loading memberships for user ${user.id}...`);
         const data = await userMembershipService.getByUserId(user.id);
+        console.log(`[PROFILE] Loaded ${data.length} memberships:`, data);
         setMemberships(data);
+        if (data.length > 0) {
+          toast.success(`Loaded ${data.length} membership(s)`);
+        }
       }
     } catch (error) {
       console.error("Error loading memberships:", error);
       toast.error("Failed to load memberships");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    try {
+      setIsRefreshing(true);
+      console.log(`[PROFILE] User clicked refresh memberships`);
+      await loadMemberships();
+      toast.success("Memberships refreshed!");
+    } catch (error) {
+      console.error("Error refreshing memberships:", error);
+      toast.error("Failed to refresh memberships");
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
