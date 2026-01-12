@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/Layout";
 import { orderService, userMembershipService } from "@/services/database";
+import { paymentService } from "@/services/payment";
 import { Eye, Package, Check, Truck, Home, Clock, Crown, Zap, Gift, Trophy, Star, Flame } from "lucide-react";
 import { toast } from "sonner";
 
