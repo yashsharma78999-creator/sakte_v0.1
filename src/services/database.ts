@@ -9,6 +9,23 @@ import {
   PaymentOption,
 } from "@/types/database";
 
+// ===== HELPER FUNCTION (FIXED - Line 388) =====
+export function calculateMembershipStatus(
+  membership: any,
+  now: Date = new Date()
+): "active" | "expired" | "pending" | "queued" {
+  const startDate = new Date(membership.start_date);
+  const endDate = new Date(membership.end_date);
+
+  if (startDate > now) {
+    return "pending";
+  } else if (endDate > now) {
+    return "active";
+  } else {
+    return "expired";
+  }
+}
+
 // ===== PRODUCTS =====
 export const productService = {
   async getAll() {
@@ -97,8 +114,8 @@ export const orderService = {
       .select(`
         *,
         order_items (
-          *,
-          products (*)
+         *,
+         products (*)
         )
       `)
       .order("created_at", { ascending: false });
@@ -112,8 +129,8 @@ export const orderService = {
       .select(`
         *,
         order_items (
-          *,
-          products (*)
+         *,
+         products (*)
         )
       `)
       .eq("user_id", userId)
@@ -128,8 +145,8 @@ export const orderService = {
       .select(`
         *,
         order_items (
-          *,
-          products (*)
+         *,
+         products (*)
         )
       `)
       .eq("id", id)
@@ -229,7 +246,7 @@ export const membershipService = {
       .select("*")
       .order("created_at", { ascending: false });
     if (error) throw error;
-    return data as Membership[];
+    return data.map(calculateMembershipStatus); // ✅ Uses helper function
   },
 
   async getById(id: number) {
@@ -283,7 +300,6 @@ export const userMembershipService = {
       .eq("user_id", userId)
       .order("end_date", { ascending: false });
     if (error) throw error;
-    // Map the data to ensure proper structure
     return (data || []).map((item: any) => ({
       ...item,
       membership: item.membership || null,
@@ -306,7 +322,6 @@ export const userMembershipService = {
   },
 
   async getUserMembershipsWithQueue(userId: string) {
-    // Get all memberships for the user, sorted by start_date
     const { data, error } = await supabase
       .from("user_memberships")
       .select("*, membership:membership_id(*)")
@@ -339,7 +354,7 @@ export const userMembershipService = {
         // Only one membership of this type, use standard logic
         return {
           ...mem,
-          status: this.calculateMembershipStatus(mem, now),
+          status: calculateMembershipStatus(mem, now), // ✅ FIXED: Uses exported function
           queuePosition: null,
           nextActivationDate: null,
         };
@@ -383,22 +398,6 @@ export const userMembershipService = {
     });
 
     return processedMemberships;
-  },
-
-  private calculateMembershipStatus(
-    membership: any,
-    now: Date
-  ): "active" | "expired" | "pending" | "queued" {
-    const startDate = new Date(membership.start_date);
-    const endDate = new Date(membership.end_date);
-
-    if (startDate > now) {
-      return "pending";
-    } else if (endDate > now) {
-      return "active";
-    } else {
-      return "expired";
-    }
   },
 
   async create(userMembership: Omit<UserMembership, "id" | "created_at" | "updated_at">) {
