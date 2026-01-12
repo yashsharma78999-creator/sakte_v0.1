@@ -13,13 +13,13 @@ export default function Orders() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAuthenticated } = useAuth();
-  const [orders, setOrders] = useState<any[]>([]);
+  const [items, setItems] = useState<any[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      loadOrders();
+      loadOrdersAndMemberships();
     }
   }, [isAuthenticated, user]);
 
@@ -30,15 +30,36 @@ export default function Orders() {
     }
   }, [location.state]);
 
-  const loadOrders = async () => {
+  const loadOrdersAndMemberships = async () => {
     try {
       setIsLoading(true);
       if (user?.id) {
-        const data = await orderService.getByUserId(user.id);
-        setOrders(data);
+        const [ordersData, membershipsData] = await Promise.all([
+          orderService.getByUserId(user.id),
+          userMembershipService.getByUserId(user.id),
+        ]);
+
+        // Combine orders and memberships
+        const combinedItems = [
+          ...ordersData.map((order: any) => ({
+            ...order,
+            type: "order",
+            date: new Date(order.created_at),
+          })),
+          ...membershipsData.map((membership: any) => ({
+            ...membership,
+            type: "membership",
+            date: new Date(membership.created_at),
+          })),
+        ];
+
+        // Sort by date (newest first)
+        combinedItems.sort((a, b) => b.date.getTime() - a.date.getTime());
+
+        setItems(combinedItems);
       }
     } catch (error) {
-      console.error("Error loading orders:", error);
+      console.error("Error loading orders and memberships:", error);
       toast.error("Failed to load orders");
     } finally {
       setIsLoading(false);
